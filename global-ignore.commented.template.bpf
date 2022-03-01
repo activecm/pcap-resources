@@ -1,0 +1,35 @@
+#Comments in this file _must_ start with a pound symbol as the far left character - they cannot be on the same line as filter items.
+#To use this filter in a libpcap application, place the following where you'd normally put the filter, such as:
+#tcpdump ...... "$(grep -v '^#' $HOME/med/bpf/global-ignore.commented.bpf)"
+#pcap_stats.py ...... -b "$(grep -v '^#' $HOME/med/bpf/global-ignore.commented.bpf)"
+#You can add other filters to it like:
+#tcpdump ...... "$(grep -v '^#' $HOME/med/bpf/global-ignore.commented.bpf) and (not tcp port 80) and (not host 8.8.8.8)"
+#If you like having it all on one line, use:
+#tcpdump ...... "$(grep -v '^#' $HOME/med/bpf/global-ignore.commented.bpf | tr -d '\r\n')"
+#
+#The following lines are examples of filters.  They're not intended to be a complete filter file.
+#
+( not (
+#======== UDP only ========
+  (udp and (
+#Gotomeeting
+       ((port 1853) and (net 78.108.121.0/24 or net 173.199.0.0/18 or net 68.64.0.0/19 or net 23.239.224.0/19))
+    or ((port 8200) and (host 68.64.5.254 or net 68.64.28.0/24 or net 67.217.78.0/24 or net 173.199.0.0/18))
+#Gmail
+    or ((port 443) and (net 172.217.4.0/24 or net 172.217.8.0/24))
+  ))
+#
+#======== End of UDP ========
+#======== TCP only ======== (For IPv4: only discard ack-only packets, keep packets with syn, fin, or rst turned on.  For IPv6: discard all matching packets (including SYN, FIN, RST packets))
+  or ((tcp) and (
+#Google
+       ((port 443) and (net 142.250.0.0/15) and (tcp[13] & 0x17 == 0x10))
+    or ((port 443) and (ip6 net 2607:f8b0:4006::/48 or ip6 net 2607:f8b0:400d::/48))
+#Gotomeeting
+    or ((port 443) and (host 68.64.5.254 or net 173.199.0.0/18 or net 67.217.64.0/19 or host 216.115.208.230) and (tcp[13] & 0x17 == 0x10))
+#Microsoft teams sharing
+    or ((port 443) and (net 52.108.0.0/14) and (tcp[13] & 0x17 == 0x10))
+    or ((port 443) and (ip6 host 2600:1401:4000::1724:2713 or ip6 host 2620:1ec:a92::171))
+  ))
+#======== End of TCP ========
+))
